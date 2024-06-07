@@ -157,3 +157,7 @@ dmypy.json
 
 # Pyre
 .pyre/
+
+# Allow tracking specific files with Git LFS
+!nba_env/lib/python3.11/site-packages/**/*.dylib
+!nba_env/lib/python3.11/site-packages/**/*.pkl
