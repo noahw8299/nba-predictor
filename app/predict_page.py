@@ -10,7 +10,8 @@ import joblib
 @st.cache_resource
 def load_model():
     try:
-        model = joblib.load('predict_model.pkl')
+        model_path = get_dir_path('predict_model.pkl')
+        model = joblib.load(model_path)
         return model
     except Exception as e:
         st.error(f"Error loading the model: {e}")
@@ -19,7 +20,8 @@ def load_model():
 @st.cache_resource
 def load_scaler():
     try:
-        scaler = joblib.load('model_scaler.pkl')
+        scaler_path = get_dir_path('model_scaler.pkl')
+        scaler = joblib.load(scaler_path)
         return scaler
     except Exception as e:
         st.error(f"Error loading the scaler: {e}")
@@ -61,6 +63,13 @@ def prepare_features_for_prediction(home_team, away_team, data, scaler, numerica
     
     return feature_vector_scaled
 
+def get_dir_path(file):
+    # Get the current working directory
+    cwd = os.getcwd()
+
+    # Create the full path to the CSV file
+    return os.path.join(cwd, "app", file) 
+
 def show_predict_page():
     st.title("Predict NBA Games")
 
@@ -71,7 +80,11 @@ def show_predict_page():
         "HOU", "DAL", "BOS", "MEM", "LAC", "OKC"
     }
 
-    data = pd.read_csv("result.csv")
+    # Create the full path to the CSV file
+    csv_path = get_dir_path("result.csv")
+
+    # Read the CSV file
+    data = pd.read_csv(csv_path)
 
     # Define the features - include team identifiers
     # Define stats that will be unavailable when trying to make predictions on the future
