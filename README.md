@@ -81,6 +81,7 @@ If you wish to see and interact with the app without setting it up locally, you 
 
 ## Project Structure
 
+```plaintext
 nba-spread-predictor/
 ├── app/
 │   ├── app.py                # Main application file for Streamlit
