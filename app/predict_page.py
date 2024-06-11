@@ -1,10 +1,12 @@
 import streamlit as st
-import pickle
 import numpy as np
 import pandas as pd
 import sklearn
 import os
 import joblib
+import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
 
 # Cache the model and scaler loading functions
 @st.cache_resource
@@ -44,6 +46,7 @@ def get_recent_performance_stats(team, team_type, data):
     if team_data.empty:
         raise ValueError(f"No recent performance stats found for team {team} as {team_type}.")
     
+    #print(recent_stats.columns)
     return recent_stats
 
 def prepare_features_for_prediction(home_team, away_team, data, scaler, numerical_columns):
@@ -60,8 +63,10 @@ def prepare_features_for_prediction(home_team, away_team, data, scaler, numerica
     
     # Scale the feature vector
     feature_vector_scaled = scaler.transform(feature_vector)
+
+    feature_vector_scaled_df = pd.DataFrame(feature_vector_scaled, columns=numerical_columns)
     
-    return feature_vector_scaled
+    return feature_vector_scaled_df
 
 def get_dir_path(file):
     # Get the current working directory
@@ -69,6 +74,68 @@ def get_dir_path(file):
 
     # Create the full path to the CSV file
     return os.path.join(cwd, "app", file) 
+
+def plot_head_to_head(data, home_team, away_team):
+    home_data = data[data['home_team'] == home_team].select_dtypes(include=['float64', 'int64']).mean()
+    away_data = data[data['away_team'] == away_team].select_dtypes(include=['float64', 'int64']).mean()
+
+    metrics = ['pts_scored', 'pts_allowed', 'rebounds', 'assists']
+    home_metrics = home_data[[f'home_{metric}' for metric in metrics]]
+    away_metrics = away_data[[f'away_{metric}' for metric in metrics]]
+
+    metrics_df = pd.DataFrame({
+        'Metrics': metrics,
+        'Home': home_metrics.values,
+        'Away': away_metrics.values
+    })
+
+    metrics_df.plot(kind='bar', x='Metrics', figsize=(10, 5))
+    plt.title('Head-to-Head Comparison')
+    plt.ylabel('Average per Game')
+    st.pyplot(plt)
+
+def plot_team_performance(data, team, team_type):
+    team_data = data[data[f'{team_type}_team'] == team]
+    team_data = team_data.sort_values(by='date')
+
+    if team_type == 'home':
+        points_scored = team_data['home_pts_scored']
+        points_allowed = team_data['home_pts_allowed']
+    else:
+        points_scored = team_data['away_pts_scored']
+        points_allowed = team_data['away_pts_allowed']
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(team_data['date'], points_scored, label='Points Scored', color='blue')
+    plt.plot(team_data['date'], points_allowed, label='Points Allowed', color='red')
+    plt.xlabel('Date')
+    plt.ylabel('Points')
+    plt.title(f'{team} Performance Over Time ({team_type.capitalize()} Games)')
+    plt.legend()
+    st.pyplot(plt)
+
+def show_recent_performance(data, home_team, away_team):
+    home_data = data[data['home_team'] == home_team].tail(5)
+    away_data = data[data['away_team'] == away_team].tail(5)
+
+    st.write(f"### {home_team} Recent Performance (Home Games)")
+    st.dataframe(home_data[['date', 'home_pts_scored', 'home_pts_allowed', 'won']])
+
+    st.write(f"### {away_team} Recent Performance (Away Games)")
+    st.dataframe(away_data[['date', 'away_pts_scored', 'away_pts_allowed', 'won']])
+
+def show_win_probability(predicted_spread):
+    win_prob_home = 1 / (1 + np.exp(-predicted_spread)) * 100  # Assuming logistic regression output
+    win_prob_away = 100 - win_prob_home
+
+    fig = go.Figure(go.Indicator(
+        mode = "gauge+number",
+        value = win_prob_home,
+        title = {'text': "Home Team Win Probability"},
+        gauge = {'axis': {'range': [0, 100]}}
+    ))
+
+    st.plotly_chart(fig)
 
 def show_predict_page():
     st.title("Predict NBA Games")
@@ -113,9 +180,18 @@ def show_predict_page():
 
     if ok:
         if home_team and away_team:
-            feature_vector = prepare_features_for_prediction(home_team, away_team, data, scaler, numerical_columns)
+            feature_vector = prepare_features_for_prediction(home_team, away_team, features, scaler, numerical_columns)
             if feature_vector is not None:
                 predicted_spread = model.predict(feature_vector)
                 st.write(f"Predicted spread: {predicted_spread[0]}")
+
+                # Show additional visualizations
+                # plot_team_performance(data, home_team, 'home')
+                # plot_team_performance(data, away_team, 'away')
+                #plot_head_to_head(data, home_team, away_team)
+                # show_recent_performance(data, home_team, away_team)
+                # show_win_probability(predicted_spread[0])
+
+                
         else:
             st.error('Please enter both home and away teams.')
