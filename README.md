@@ -82,20 +82,21 @@ If you wish to see and interact with the app without setting it up locally, you 
 ## Project Structure
 
 ```plaintext
-nba-spread-predictor/
-├── app/
+nba-spread-predictor
+├── app
 │   ├── app.py                # Main application file for Streamlit
 │   ├── predict_page.py       # Prediction page script
 │   ├── predict_model.pkl     # Trained model for predictions
 │   ├── model_scaler.pkl      # Scaler used for feature scaling
-│   ├── images/               # Directory for storing images
+│   ├── images                # Directory for storing images
 │   ├── result.csv            # CSV file with historical game data
-├── model/
-│   ├── predict/              # Directory for prediction related scripts and notebooks
-│   ├── scrape/               # Directory for scraping related scripts and notebooks
-├── nba_env/                  # Virtual environment directory (not tracked by git)
+├── model
+│   ├── predict               # Directory for prediction related scripts and notebooks
+│   ├── scrape                # Directory for scraping related scripts and notebooks
+├── nba_env                   # Virtual environment directory (not tracked by git)
 ├── requirements.txt          # List of dependencies
 ├── README.md                 # Project README file
+```
 
 ## Data Collection
 
