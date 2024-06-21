@@ -46,46 +46,62 @@ def create_dashboard(home_stats, away_stats, selected_metrics, labels):
 
     st.plotly_chart(fig)
 
-def create_box_chart(home_stats, away_stats, cols, team1_name="Team 1", team2_name="Team 2"):
+def create_bar_chart(home_stats, away_stats, cols, home_team="Team 1", away_team="Team 2"):
     fig = go.Figure()
 
     # Convert home_stats and away_stats to DataFrames if they are not already
     if not isinstance(home_stats, pd.DataFrame):
-        home_stats = home_stats.to_frame()
+        home_stats = home_stats.to_frame().T
     if not isinstance(away_stats, pd.DataFrame):
-        away_stats = away_stats.to_frame()
-
-    # Ensure cols only contains strings
-    cols = [str(col) for col in cols]
+        away_stats = away_stats.to_frame().T
 
     # Filter columns for home and away teams based on the provided substrings
     home_cols = [col for col in home_stats.columns if any(sub in col for sub in cols)]
     away_cols = [col for col in away_stats.columns if any(sub in col for sub in cols)]
 
-    # Add box plot traces for each home column and team
-    for col in home_cols:
-        fig.add_trace(go.Box(
-            y=home_stats[col],
-            name=f'{team1_name} - {col.replace("home_rolling_avg_", "")}',
-            boxmean='sd',  # Shows the mean and standard deviation
-            marker_color='blue'  # Set color to blue for team 1
-        ))
+    # Remove '_opp' suffix for proper grouping
+    home_cols_clean = [col.replace("home_rolling_avg_", "") for col in home_cols]
+    away_cols_clean = [col.replace("away_rolling_avg_", "").replace("_opp", "") for col in away_cols]
 
-    # Add box plot traces for each away column and team
-    for col in away_cols:
-        fig.add_trace(go.Box(
-            y=away_stats[col],
-            name=f'{team2_name} - {col.replace("away_rolling_avg_", "")}',
-            boxmean='sd',  # Shows the mean and standard deviation
-            marker_color='red'  # Set color to red for team 2
-        ))
+    categories = list(set(home_cols_clean + away_cols_clean))
+    categories.sort()
+
+    home_values = []
+    away_values = []
+    for category in categories:
+        home_col = f'home_rolling_avg_{category}'
+        away_col = f'away_rolling_avg_{category}_opp'
+
+        if home_col in home_stats:
+            home_values.append(home_stats[home_col].values[0])
+        else:
+            home_values.append(0)
+
+        if away_col in away_stats:
+            away_values.append(away_stats[away_col].values[0])
+        else:
+            away_values.append(0)
+
+    fig.add_trace(go.Bar(
+        x=categories,
+        y=home_values,
+        name=f'{home_team}',
+        marker_color='blue'  # Set color to blue for home team
+    ))
+
+    fig.add_trace(go.Bar(
+        x=categories,
+        y=away_values,
+        name=f'{away_team}',
+        marker_color='red'  # Set color to red for away team
+    ))
 
     fig.update_layout(
-        title="Comparison of Rolling Averages",
+        title="Comparison of Rolling Averages Over the Past 5 Games",
         yaxis_title="Value",
         xaxis_title="Statistics",
-        boxmode='group',  # Group boxes of the same category together
-        showlegend=False
+        barmode='group',  # Group bars of the same category together
+        showlegend=True
     )
 
     st.plotly_chart(fig)
