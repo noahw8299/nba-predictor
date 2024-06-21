@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 import seaborn as sns
 from math import pi
 
-def create_dashboard(home_stats, away_stats, selected_metrics, labels):
+def create_dashboard(home_stats, away_stats, selected_metrics, labels, home_team='home', away_team='away'):
     # Select key metrics for comparison
 
     home_values = home_stats[selected_metrics].values.flatten().tolist()
@@ -15,22 +15,19 @@ def create_dashboard(home_stats, away_stats, selected_metrics, labels):
 
     fig = go.Figure()
 
-    teams = labels[3:]
-    labels = labels[:-2]
-
     # Add traces with customized line colors
     fig.add_trace(go.Scatterpolar(
         r=home_values,
         theta=labels,
         fill='toself',
-        name=f'Home ({teams[0]})',
+        name=f'Home ({home_team})',
         line=dict(color='blue')  # Set color to blue for home team
     ))
     fig.add_trace(go.Scatterpolar(
         r=away_values,
         theta=labels,
         fill='toself',
-        name=f'Away ({teams[1]})',
+        name=f'Away ({away_team})',
         line=dict(color='red')  # Set color to red for away team
     ))
 

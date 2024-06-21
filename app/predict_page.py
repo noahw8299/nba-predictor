@@ -198,8 +198,8 @@ def show_predict_page():
                         
                 # Show additional visualizations
                 selected_metrics = ['fgpct', '3ppct', 'ftpct']
-                labels = ['Field Goal %', '3-Point %', 'Free Throw %'] + [home_team, away_team]
-                stats.create_dashboard(home_stats, away_stats, selected_metrics, labels)
+                labels = ['Field Goal %', '3-Point %', 'Free Throw %']
+                stats.create_dashboard(home_stats, away_stats, selected_metrics, labels, home_team=home_team, away_team=away_team)
 
                 cols = ['rolling_avg_fg','rolling_avg_fga','rolling_avg_3p','rolling_avg_3pa','rolling_avg_ft','rolling_avg_fta']
                 stats.create_bar_chart(home_stats, away_stats, cols, home_team=home_team, away_team=away_team)
