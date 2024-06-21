@@ -200,11 +200,6 @@ def show_predict_page():
                 selected_metrics = ['fgpct', '3ppct', 'ftpct']
                 labels = ['Field Goal %', '3-Point %', 'Free Throw %'] + [home_team, away_team]
                 stats.create_dashboard(home_stats, away_stats, selected_metrics, labels)
-
-                st.write(away_stats)
-
-                cols = ['rolling_avg_fg_opp','rolling_avg_fga_opp','rolling_avg_3p_opp','rolling_avg_3pa_opp','rolling_avg_ft_opp','rolling_avg_fta_opp']
-                stats.create_box_chart(home_stats, away_stats, cols)
                 
         else:
             st.error('Please enter both home and away teams.')

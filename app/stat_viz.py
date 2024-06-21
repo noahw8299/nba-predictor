@@ -55,6 +55,9 @@ def create_box_chart(home_stats, away_stats, cols, team1_name="Team 1", team2_na
     if not isinstance(away_stats, pd.DataFrame):
         away_stats = away_stats.to_frame()
 
+    # Ensure cols only contains strings
+    cols = [str(col) for col in cols]
+
     # Filter columns for home and away teams based on the provided substrings
     home_cols = [col for col in home_stats.columns if any(sub in col for sub in cols)]
     away_cols = [col for col in away_stats.columns if any(sub in col for sub in cols)]
