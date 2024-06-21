@@ -128,11 +128,13 @@ def show_predict_page():
     # Adding a horizontal line
     st.markdown("---")
 
+    st.markdown(f"### Most Recent Game in Dataset")
+
     # Creating columns for better use of space
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.markdown(f"### Most Recent Game")
+        st.markdown(f"### Game")
         st.markdown(f"**Date:** {date}")
         st.markdown(f"**Teams:** {home_team} vs. {away_team}")
 
