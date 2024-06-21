@@ -78,20 +78,11 @@ def get_dir_path(file):
     return os.path.join(cwd, "app", file) 
 
 def show_predict_page():
-    st.title("Predict NBA Games")
-
-    st.write("""### Choose two teams""")
-    teams = {
-        "POR", "PHI", "PHO", "SAC", "DEN", "ORL", "GSW", "DET", "MIL", "CHI", "WAS", "MIA",
-        "LAL", "NOP", "ATL", "BRK", "MIN", "UTA", "IND", "SAS", "CLE", "NYK", "TOR", "CHO",
-        "HOU", "DAL", "BOS", "MEM", "LAC", "OKC"
-    }
-
     # Create the full path to the CSV file
     csv_path = get_dir_path("result.csv")
 
     # Read the CSV file
-    data = pd.read_csv(csv_path)
+    data = pd.read_csv(csv_path, parse_dates=['date'])
 
     # Define the features - include team identifiers
     # Define stats that will be unavailable when trying to make predictions on the future
@@ -104,9 +95,84 @@ def show_predict_page():
     model = load_model()
     scaler = load_scaler()
 
+    # Extracting the most recent game details
+    most_recent_game = data.iloc[-1]
+
+    # Getting the year from the most recent game's date
+    end_year = most_recent_game['date'].year
+
+    # Calculating the score details
+    home_team = most_recent_game['home_team']
+    away_team = most_recent_game['away_team']
+    home_pts_scored = most_recent_game['home_pts_scored']
+    away_pts_scored = most_recent_game['away_pts_scored']
+    date = most_recent_game['date'].strftime('%Y-%m-%d')
+
+    if home_pts_scored > away_pts_scored:
+        winner = home_team
+        loser = away_team
+        spread = home_pts_scored - away_pts_scored
+    else:
+        winner = away_team
+        loser = home_team
+        spread = away_pts_scored - home_pts_scored
+
+    # Constructing the intro message with Markdown
+    st.markdown(f"""
+    # NBA Game Prediction Model
+
+    ### Introduction
+    This model is a **random forest model** trained on NBA game box scores from the **2014 to {end_year} season**. 
+    """)
+
+    # Adding a horizontal line
+    st.markdown("---")
+
+    # Creating columns for better use of space
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown(f"### Most Recent Game")
+        st.markdown(f"**Date:** {date}")
+        st.markdown(f"**Teams:** {home_team} vs. {away_team}")
+
+    with col2:
+        st.markdown(f"### Score")
+        st.markdown(f"**Score:** {home_team} {home_pts_scored} - {away_team} {away_pts_scored}")
+
+    with col3:
+        st.markdown(f"### Outcome")
+        st.markdown(f"**Winner:** :trophy: **{winner}** :trophy: ")
+        st.markdown(f"**Spread:** {winner} won by **{spread} points**")
+
+    # Adding some spacing
+    st.markdown("---")
+
+    # Optionally adding a container for additional info
+    with st.container():
+        st.markdown("### Model Details")
+        st.write("The model uses a random forest algorithm to predict game outcomes based on historical box score data. It has been trained on data from the 2014 to 2023 NBA seasons, capturing various player and team statistics to make accurate predictions.")
+
+    # Optional: adding an expander for more details
+    with st.expander("See more details"):
+        st.write("""
+            - **Algorithm:** Random Forest
+            - **Training Data:** NBA game box scores (2014-2023)
+            - **Features:** Player and team statistics
+        """)
+
     if model is None or scaler is None:
         st.error("Model or scaler could not be loaded. Please check the files.")
         return
+
+    st.title("Predict NBA Games")
+
+    st.write("""### Choose two teams""")
+    teams = {
+        "POR", "PHI", "PHO", "SAC", "DEN", "ORL", "GSW", "DET", "MIL", "CHI", "WAS", "MIA",
+        "LAL", "NOP", "ATL", "BRK", "MIN", "UTA", "IND", "SAS", "CLE", "NYK", "TOR", "CHO",
+        "HOU", "DAL", "BOS", "MEM", "LAC", "OKC"
+    }
 
     col1, col2 = st.columns(2)
 
@@ -118,6 +184,9 @@ def show_predict_page():
 
     ok = st.button("PREDICT")
 
+    # Adding some spacing
+    st.markdown("---")
+
     if ok:
         if home_team and away_team:
             home_stats = get_recent_performance_stats(home_team, 'home', features)
@@ -125,11 +194,17 @@ def show_predict_page():
             feature_vector = prepare_features_for_prediction(home_team, away_team, features, scaler, numerical_columns)
             if feature_vector is not None:
                 predicted_spread = model.predict(feature_vector)
-                st.write(f"Predicted spread: {predicted_spread[0]}")
-
+                st.write(f"""### Predicted Spread {predicted_spread[0]}""")
+                        
                 # Show additional visualizations
-                stats.create_dashboard(home_stats, away_stats)
+                selected_metrics = ['fgpct', '3ppct', 'ftpct']
+                labels = ['Field Goal %', '3-Point %', 'Free Throw %'] + [home_team, away_team]
+                stats.create_dashboard(home_stats, away_stats, selected_metrics, labels)
 
+                st.write(away_stats)
+
+                cols = ['rolling_avg_fg_opp','rolling_avg_fga_opp','rolling_avg_3p_opp','rolling_avg_3pa_opp','rolling_avg_ft_opp','rolling_avg_fta_opp']
+                stats.create_box_chart(home_stats, away_stats, cols)
                 
         else:
             st.error('Please enter both home and away teams.')
